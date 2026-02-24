@@ -20,17 +20,18 @@
         
         /* Progress Bar - Quizlet Style */
         .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
-        .progress-wrapper { display: flex; align-items: center; gap: 8px; flex-grow: 1; margin-right: 20px; }
-        .progress-pill { height: 12px; background: #e8eaf2; border-radius: 6px; flex-grow: 1; transition: background 0.3s; }
+        .progress-wrapper { display: flex; align-items: center; gap: 4px; flex-grow: 1; margin-right: 20px; }
+        .progress-pill { height: 12px; background: #e8eaf2; border-radius: 6px; flex-grow: 1; min-width: 10px; transition: background 0.3s; }
         .progress-pill.completed { background: var(--primary); }
         .progress-circle { 
             width: 32px; height: 32px; background: var(--primary); color: white;
             border-radius: 50%; display: flex; justify-content: center; align-items: center;
             font-weight: bold; font-size: 14px; flex-shrink: 0; box-shadow: 0 2px 5px rgba(24,174,121,0.3);
+            margin: 0 4px;
         }
         .progress-total { 
-            background: #e8eaf2; color: #586380; padding: 4px 12px; 
-            border-radius: 16px; font-weight: bold; font-size: 14px; margin-left: auto;
+            background: #e8eaf2; color: #586380; padding: 6px 14px; 
+            border-radius: 16px; font-weight: bold; font-size: 14px; margin-left: auto; white-space: nowrap;
         }
 
         /* Question Area */
@@ -39,6 +40,8 @@
 
         /* Options Grid */
         .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        @media (max-width: 600px) { .options-grid { grid-template-columns: 1fr; } }
+        
         .option-btn {
             display: flex; align-items: center; padding: 20px; 
             border: 2px solid var(--border); border-radius: 8px; 
@@ -70,7 +73,7 @@
     <div class="container" id="quiz-container">
         <div class="header-top">
             <div class="progress-wrapper" id="progress-container"></div>
-            <div class="progress-total" id="progress-text">0</div>
+            <div class="progress-total" id="progress-text">0/0</div>
         </div>
 
         <div class="question-text" id="q-content">Đang tải dữ liệu...</div>
@@ -90,20 +93,9 @@
     </script>
 
     <script>
-        // SỬA LỖI HOISTING: Định nghĩa hàm băm lên đầu tiên
-        function getHashCode(str) {
-            let hash = 0;
-            if (str.length === 0) return hash;
-            for (let i = 0; i < str.length; i++) {
-                let char = str.charCodeAt(i);
-                hash = ((hash<<5)-hash)+char;
-                hash = hash & hash;
-            }
-            return Math.abs(hash);
-        }
-
         const rawData = JSON.parse(document.getElementById('flashcard-data').textContent);
-        const STORAGE_KEY = 'master_mcq_session_' + getHashCode(window.location.pathname);
+        // FIX LỖI 1: Sử dụng ID cố định được tạo từ Python thay vì lấy theo URL
+        const STORAGE_KEY = 'master_mcq_session_451076479757';
         
         let cards = [];
         let dueQueue = [];
@@ -177,25 +169,26 @@
             let learned = sessionTotal - dueQueue.length;
             let currentStep = learned + 1;
             
-            // Vẽ giao diện thanh tiến trình giống ảnh
-            let maxPills = 5; 
-            for(let i=1; i<=maxPills; i++) {
-                if(i < currentStep && i < maxPills) {
+            // FIX LỖI 2: Render số lượng cục pin (pill) theo đúng tổng số câu hỏi (sessionTotal)
+            for(let i=1; i<=sessionTotal; i++) {
+                if(i < currentStep) {
                     container.innerHTML += `<div class="progress-pill completed"></div>`;
-                } else if (i === currentStep || (i === maxPills && currentStep >= maxPills)) {
+                } else if (i === currentStep) {
                     container.innerHTML += `<div class="progress-circle">${currentStep}</div>`;
                 } else {
                     container.innerHTML += `<div class="progress-pill"></div>`;
                 }
             }
-            document.getElementById('progress-text').innerText = cards.length;
+            
+            // Cập nhật text hiển thị số câu (Ví dụ: 3 / 10)
+            let displayStep = currentStep > sessionTotal ? sessionTotal : currentStep;
+            document.getElementById('progress-text').innerText = `${displayStep} / ${sessionTotal}`;
         }
 
         function renderQuestion() {
             isAnswered = false;
             let item = dueQueue[0]; 
             
-            // Format câu hỏi sát với ảnh gốc
             let questionHTML = item.context_en.replace(/(\.\.\.\.\.|___)/g, ".....");
             if (item.translation) {
                 questionHTML += ` <span style="color:#586380">(${item.translation})</span>`;
@@ -271,4 +264,3 @@
     </script>
 </body>
 </html>
-
