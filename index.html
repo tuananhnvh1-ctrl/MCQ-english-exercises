@@ -94,7 +94,7 @@
 
     <script>
         const rawData = JSON.parse(document.getElementById('flashcard-data').textContent);
-        const STORAGE_KEY = 'master_mcq_session_8eb3049890f5';
+        const STORAGE_KEY = 'master_mcq_session_cbc17677fd8a';
         
         let cards = [];
         let dueQueue = [];
@@ -114,7 +114,6 @@
                 cards = JSON.parse(JSON.stringify(rawData));
             }
             
-            // FIX LỖI: Cố định tổng số câu bằng đúng số lượng từ vựng, không thay đổi khi F5
             sessionTotal = cards.length; 
             
             buildQueue();
@@ -125,7 +124,6 @@
             const now = Date.now();
             dueQueue = cards.filter(c => c.reps === 0 || c.nextReview <= now);
             
-            // Xáo trộn các câu hỏi còn lại
             for (let i = dueQueue.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [dueQueue[i], dueQueue[j]] = [dueQueue[j], dueQueue[i]];
@@ -232,7 +230,8 @@
                 dueQueue.shift(); 
                 
                 saveSession();
-                setTimeout(() => checkGameState(), 700);
+                // GIẢM THỜI GIAN: Chuyển câu đúng (từ 700ms xuống 300ms)
+                setTimeout(() => checkGameState(), 300);
             } else {
                 btnElement.classList.add('wrong');
                 document.querySelectorAll('.option-btn').forEach(b => {
@@ -247,10 +246,12 @@
                 dueQueue.push(failedItem);
                 
                 saveSession();
-                setTimeout(() => checkGameState(), 2000); 
+                // GIẢM THỜI GIAN: Chuyển câu sai (từ 2000ms xuống 1200ms)
+                setTimeout(() => checkGameState(), 1200); 
             }
         }
 
+        // Hỗ trợ phím tắt 1, 2, 3, 4 trên bàn phím
         document.addEventListener('keydown', (e) => {
             if(['1','2','3','4'].includes(e.key) && !isAnswered && dueQueue.length > 0) {
                 let index = parseInt(e.key) - 1;
