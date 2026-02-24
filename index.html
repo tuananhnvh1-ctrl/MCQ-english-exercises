@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Master MCQ - Quizlet Clone</title>
+    <title>Unit 1 - Vocabulary - Master MCQ</title>
     <style>
         :root { --primary: #18ae79; --bg: #ffffff; --text: #303545; --gray-bg: #f6f7fb; --border: #d9dde8; }
         body { 
@@ -18,7 +18,7 @@
             padding: 40px; box-sizing: border-box; position: relative;
         }
         
-        /* Progress Bar - Quizlet Style */
+        /* Progress Bar */
         .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
         .progress-wrapper { display: flex; align-items: center; gap: 4px; flex-grow: 1; margin-right: 20px; }
         .progress-pill { height: 12px; background: #e8eaf2; border-radius: 6px; flex-grow: 1; min-width: 10px; transition: background 0.3s; }
@@ -84,7 +84,7 @@
 
     <div class="container" id="completion-screen">
         <div class="congrats-title">🎉 Xuất sắc! Bạn đã hoàn thành bài tập.</div>
-        <p style="color: #586380; font-size: 1.1em; margin-bottom: 30px;">Hệ thống đã lưu lại tiến trình ghi nhớ của bạn.</p>
+        <p style="color: #586380; font-size: 1.1em; margin-bottom: 30px;">Hệ thống đã tự động lưu lại tiến trình (cookies/local storage) của bạn.</p>
         <button class="btn-restart" onclick="clearSession()">Học lại từ đầu (Xóa bộ nhớ)</button>
     </div>
 
@@ -94,7 +94,8 @@
 
     <script>
         const rawData = JSON.parse(document.getElementById('flashcard-data').textContent);
-        const STORAGE_KEY = 'master_mcq_session_cbc17677fd8a';
+        // ID tĩnh được tạo từ Python, đảm bảo refresh hoặc upload lại GitHub không mất data
+        const STORAGE_KEY = 'master_mcq_session_fffcef2b29b7';
         
         let cards = [];
         let dueQueue = [];
@@ -115,7 +116,6 @@
             }
             
             sessionTotal = cards.length; 
-            
             buildQueue();
             checkGameState();
         }
@@ -230,8 +230,11 @@
                 dueQueue.shift(); 
                 
                 saveSession();
-                // GIẢM THỜI GIAN: Chuyển câu đúng (từ 700ms xuống 300ms)
-                setTimeout(() => checkGameState(), 300);
+                
+                // Siêu tốc < 0.1s (50ms). Dùng requestAnimationFrame để tránh giật lag UI
+                requestAnimationFrame(() => {
+                    setTimeout(() => checkGameState(), 50);
+                });
             } else {
                 btnElement.classList.add('wrong');
                 document.querySelectorAll('.option-btn').forEach(b => {
@@ -246,12 +249,15 @@
                 dueQueue.push(failedItem);
                 
                 saveSession();
-                // GIẢM THỜI GIAN: Chuyển câu sai (từ 2000ms xuống 1200ms)
-                setTimeout(() => checkGameState(), 1200); 
+                
+                // Sai thì dừng lâu hơn 1 chút xíu (90ms) để mắt kiệp nhìn đáp án đúng, nhưng vẫn đảm bảo < 0.1s
+                requestAnimationFrame(() => {
+                    setTimeout(() => checkGameState(), 90); 
+                });
             }
         }
 
-        // Hỗ trợ phím tắt 1, 2, 3, 4 trên bàn phím
+        // Hỗ trợ phím tắt 1, 2, 3, 4
         document.addEventListener('keydown', (e) => {
             if(['1','2','3','4'].includes(e.key) && !isAnswered && dueQueue.length > 0) {
                 let index = parseInt(e.key) - 1;
