@@ -94,8 +94,7 @@
 
     <script>
         const rawData = JSON.parse(document.getElementById('flashcard-data').textContent);
-        // FIX LỖI 1: Sử dụng ID cố định được tạo từ Python thay vì lấy theo URL
-        const STORAGE_KEY = 'master_mcq_session_451076479757';
+        const STORAGE_KEY = 'master_mcq_session_8eb3049890f5';
         
         let cards = [];
         let dueQueue = [];
@@ -114,6 +113,10 @@
             } else {
                 cards = JSON.parse(JSON.stringify(rawData));
             }
+            
+            // FIX LỖI: Cố định tổng số câu bằng đúng số lượng từ vựng, không thay đổi khi F5
+            sessionTotal = cards.length; 
+            
             buildQueue();
             checkGameState();
         }
@@ -121,8 +124,8 @@
         function buildQueue() {
             const now = Date.now();
             dueQueue = cards.filter(c => c.reps === 0 || c.nextReview <= now);
-            sessionTotal = dueQueue.length; // Số câu cần học trong phiên này
             
+            // Xáo trộn các câu hỏi còn lại
             for (let i = dueQueue.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [dueQueue[i], dueQueue[j]] = [dueQueue[j], dueQueue[i]];
@@ -169,7 +172,6 @@
             let learned = sessionTotal - dueQueue.length;
             let currentStep = learned + 1;
             
-            // FIX LỖI 2: Render số lượng cục pin (pill) theo đúng tổng số câu hỏi (sessionTotal)
             for(let i=1; i<=sessionTotal; i++) {
                 if(i < currentStep) {
                     container.innerHTML += `<div class="progress-pill completed"></div>`;
@@ -180,7 +182,6 @@
                 }
             }
             
-            // Cập nhật text hiển thị số câu (Ví dụ: 3 / 10)
             let displayStep = currentStep > sessionTotal ? sessionTotal : currentStep;
             document.getElementById('progress-text').innerText = `${displayStep} / ${sessionTotal}`;
         }
